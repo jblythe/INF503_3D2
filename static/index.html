@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Database Query UI</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #f4f4f4;
+    }
+  </style>
+</head>
+<body>
+  <h1>Database Query Interface</h1>
+  <form id="queryForm">
+    <label for="query">Enter SQL Query:</label><br>
+    <textarea id="query" name="query" rows="5" style="width: 100%;"></textarea><br><br>
+    <button type="submit">Run Query</button>
+  </form>
+  <div id="results"></div>
+
+  <script>
+    document.getElementById("queryForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const query = document.getElementById("query").value;
+      const response = await fetch("/run_query", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ query })
+      });
+
+      const data = await response.json();
+      const resultsDiv = document.getElementById("results");
+
+      if (data.error) {
+        resultsDiv.innerHTML = `<p style="color:red;">Error: ${data.error}</p>`;
+      } else {
+        const rows = data.results;
+        if (rows.length === 0) {
+          resultsDiv.innerHTML = "<p>No results found.</p>";
+        } else {
+          const table = document.createElement("table");
+          const thead = table.createTHead();
+          const tbody = table.createTBody();
+
+          const headerRow = thead.insertRow();
+          Object.keys(rows[0]).forEach(col => {
+            const th = document.createElement("th");
+            th.textContent = col;
+            headerRow.appendChild(th);
+          });
+
+          rows.forEach(row => {
+            const rowEl = tbody.insertRow();
+            Object.values(row).forEach(cell => {
+              const cellEl = rowEl.insertCell();
+              cellEl.textContent = cell;
+            });
+          });
+
+          resultsDiv.innerHTML = "";
+          resultsDiv.appendChild(table);
+        }
+      }
+    });
+  </script>
+</body>
+</html>
